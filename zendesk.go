@@ -48,6 +48,10 @@ func (client *ZendeskClient) UpdateAsSubcriber(isSubcriber bool, email string) (
 }
 
 func (client *ZendeskClient) updateOrganization(organization string, belongTo bool, email string) (error){
+  if !client.validateUserAndToken() {
+    return errors.New("Invalid set username and token for calling zendesk API")
+  }
+
   id, err := client.getIdByEmail(email)
   if err != nil {
     return err
@@ -57,14 +61,15 @@ func (client *ZendeskClient) updateOrganization(organization string, belongTo bo
   if belongTo {
     organizationCode = client.organizationCodes[organization]
   }
-  o_id, r := client.putOrganization(organizationCode, id)
-  if r == nil {
-    if o_id == organizationCode {
-      return nil
-    }
+
+  o_id, err := client.putOrganization(organizationCode, id)
+  if err != nil {
+    return err
+  }
+  if o_id != organizationCode {
     return errors.New("organization_id update mismatch")
   }
-  return r
+  return nil
 }
 
 func (client *ZendeskClient) putOrganization(organizationCode string, id string) (string, error){
@@ -75,7 +80,7 @@ func (client *ZendeskClient) putOrganization(organizationCode string, id string)
   req, _ := http.NewRequest("PUT", url, sentBody)
   req.Header.Set("Content-Type", "application/json")
   req.SetBasicAuth(client.zendeskUsername, client.zendeskToken)
-  resp, err:= client.HttpClient.Do(req)
+  resp, err := client.HttpClient.Do(req)
   if err != nil {
     return "",err
   }
@@ -128,6 +133,10 @@ func (client *ZendeskClient) getIdByEmail(email string) (string, error){
   return strconv.FormatInt(int64(user["id"].(float64)), 10), nil
 }
 
+func (client *ZendeskClient) validateUserAndToken() bool{
+  return len(client.zendeskUsername) > 0 || len(client.zendeskToken) > 0 
+}
+
 var (
   pool = bytepool.New(100, 102400)
   Client *ZendeskClient
@@ -136,6 +145,8 @@ var (
 func init() {
   Client = &ZendeskClient{
     zendeskUrl : "https://viki.zendesk.com/api/v2",
+    zendeskUsername: "",
+    zendeskToken: "",
     HttpClient : &http.Client{},
   }
   Client.organizationCodes = make(map[string]string)

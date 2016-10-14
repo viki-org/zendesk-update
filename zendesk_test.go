@@ -16,11 +16,20 @@ var (
 func init() {
   testClient = &ZendeskClient{
     zendeskUrl : "https://viki.zendesk.com/api/v2",
+    zendeskUsername: "mariliam@viki.com",
+    zendeskToken: "abcd",
     HttpClient : &http.Client{},
   }
   testClient.organizationCodes = make(map[string]string)
   testClient.organizationCodes["QCs"] =  "4375387268"
   testClient.organizationCodes["Subcribers"] =  "4322274827"
+}
+
+func TestValidateUserAndToken(t *testing.T) {
+  spec := gspec.New(t)
+
+  isValid := testClient.validateUserAndToken()
+  spec.Expect(isValid).ToEqual(true)
 }
 
 func TestUpdateAsQC(t *testing.T) {
