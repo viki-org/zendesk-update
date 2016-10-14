@@ -1,5 +1,6 @@
 package zendesk
 import (
+  "fmt"
   "encoding/json"
   "errors"
   "net/http"
@@ -95,8 +96,10 @@ func (client *ZendeskClient) putOrganization(organizationCode string, id string)
     return "", err
   }
   m := result.(map[string]interface{})
-  var user map[string]interface{}
-  user = m["user"].(map[string]interface{})
+  user, ok := m["user"].(map[string]interface{})
+  if !ok {
+    fmt.Errorf("Zendesk respond is not correct : %v", m)
+  }
   if user["organization_id"] == "" {
     return "", nil
   }
@@ -126,10 +129,14 @@ func (client *ZendeskClient) getIdByEmail(email string) (string, error){
     return "", err
   }
   m := result.(map[string]interface{})
-  var users []interface{}
-  users = m["users"].([]interface{})
-  var user map[string]interface{}
-  user = users[0].(map[string]interface{})
+  users, ok := m["users"].([]interface{})
+  if !ok {
+    fmt.Errorf("Zendesk respond is not correct : %v", m)
+  }
+  user, ok := users[0].(map[string]interface{})
+  if !ok {
+    fmt.Errorf("Zendesk respond is not correct : %v", m)
+  }
   return strconv.FormatInt(int64(user["id"].(float64)), 10), nil
 }
 
