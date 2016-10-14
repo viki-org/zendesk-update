@@ -15,6 +15,14 @@ type ZendeskClient struct {
   HttpClient *http.Client
 }
 
+func (client *ZendeskClient) SetUrl(Url string) {
+  client.zendeskUrl = Url
+}
+
+func (client *ZendeskClient) GetUrl() string {
+  return client.zendeskUrl
+}
+
 func (client *ZendeskClient) SetUsername(username string) {
   client.zendeskUsername = username + "/token"
 }
